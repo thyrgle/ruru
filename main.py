@@ -2,6 +2,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from parsy import forward_declaration, generate, whitespace, regex, string, \
                   seq, peek
+from pprint import pprint
 
 
 class Program:
@@ -12,6 +13,7 @@ class Program:
     entrypoint = False # Did the user define a main function?
     premain = True # Global stuff to run before main if needed. TODO
     use_any = True
+    use_unknown = False
     use_rc = True
 
     @staticmethod
@@ -160,6 +162,7 @@ class EmptyLine(Expr):
 @dataclass
 class Assignment:
     name: str
+    type_: str
     rhs: Expr
 
     @Program.scoped
@@ -226,6 +229,30 @@ def ctrl_stmt(keyword):
     return parser
 
 
+paren_expr = string("(") >> expr << string(")")
+function_call = seq(
+    name, 
+    string("(") >> expr.at_least(0) << string(")")
+).combine(FunctionCall)
+integer = regex("[0-9]+").desc("int")
+decimal = regex("[0-9]+\.[0-9]+").desc("float")
+s = (string("\"") | string("'")) \
+  + regex('[a-zA-Z0-9\ ]*') \
+  + (string("\"") | string("'")).desc("string") # string and str are taken.
+
+atom = (name | decimal | integer | s).desc("atom")
+
+
+def make_bin_op(keyword):
+    @generate
+    def parser():
+        lhs = yield ws >> (paren_expr | function_call | atom) << ws
+        yield string(keyword)
+        rhs = yield ws >> (expr | function_call | atom) << ws
+        return BinOp(lhs, keyword, rhs)
+    return parser
+
+
 @generate
 def else_stmt():
     """ Else is *similar* to the other control flow, but does not have a
@@ -263,13 +290,6 @@ def function_decl():
 
 
 def lexer(code):
-    integer = regex("[0-9]+").desc("int")
-    decimal = regex("[0-9]+\.[0-9]+").desc("float")
-    s = (string("\"") | string("'")) \
-      + regex('[a-zA-Z0-9\ ]*') \
-      + (string("\"") | string("'")).desc("string") # string and str are taken.
-    atom = (name | decimal | integer | s).desc("atom")
-
     if_stmt = ctrl_stmt("if")
     elif_stmt = ctrl_stmt("elif")
     while_stmt = ctrl_stmt("while")
@@ -279,61 +299,21 @@ def lexer(code):
                     while_stmt | for_stmt).desc("control flow")
 
     assignment = seq(
-        name << ws << string("="), ws >> expr
+        name.desc("name"),
+        (string(":") >> ws >> name).optional().desc("type"),
+        ws >> string("=") >> ws >> expr << string("\n").optional()
     ).combine(Assignment)
-    paren_expr = string("(") >> expr << string(")")
 
-    function_call = seq(
-        name, 
-        string("(") >> expr.at_least(0) << string(")")
-    ).combine(FunctionCall)
-
-    addition = seq(
-        ws >> (paren_expr | function_call | atom) << ws,
-        string("+"), 
-        ws >> (expr | function_call | atom) << ws
-    ).combine(BinOp)
-    subtraction = seq(
-        ws >> (paren_expr | function_call | atom) << ws,
-        string("-"), 
-        ws >> (expr | atom | function_call | atom) << ws
-    ).combine(BinOp)
-    multiply = seq(
-        ws >> (paren_expr | function_call | atom) << ws,
-        string("*"), 
-        ws >> (expr | function_call | atom) << ws
-    ).combine(BinOp)
-    equality = seq(
-        ws >> (paren_expr | function_call | atom) << ws,
-        string("=="), 
-        ws >> (expr | function_call | atom) << ws
-    ).combine(BinOp)
-    not_eq = seq(
-        ws >> (paren_expr | function_call | atom) << ws,
-        string("!="), 
-        ws >> (expr | function_call | atom) << ws
-    )
-    greater_than = seq(
-        ws >> (paren_expr | function_call | atom) << ws,
-        string(">"), 
-        ws >> (expr | function_call | atom) << ws
-    ).combine(BinOp)
-    geq = seq(
-        ws >> (paren_expr | function_call | atom) << ws,
-        string(">="), 
-        ws >> (expr | function_call | atom) << ws
-    ).combine(BinOp)
-    less_than = seq(
-        ws >> (paren_expr | function_call | atom) << ws,
-        string("<"), 
-        ws >> (expr | function_call | atom) << ws
-    ).combine(BinOp)
-    leq = seq(
-        ws >> (paren_expr | function_call | atom) << ws,
-        string("<="), 
-        ws >> (expr | function_call | atom) << ws
-    ).combine(BinOp)
-    binary_op = (addition | \
+    addition = make_bin_op("+")
+    subtraction = make_bin_op("-")
+    multiply = make_bin_op("*")
+    equality = make_bin_op("==")
+    not_eq = make_bin_op("!=")
+    greater_than = make_bin_op(">")
+    geq = make_bin_op(">=")
+    less_than = make_bin_op("<")
+    leq = make_bin_op("<=")
+    binary_op = ((addition | \
                 subtraction | \
                 multiply | \
                 assignment | \
@@ -342,7 +322,7 @@ def lexer(code):
                 greater_than | \
                 geq | \
                 less_than | \
-                leq).desc("binary op")
+                leq)).desc("binary op")
 
     ret = seq(string("return") >> ws >> expr << string("\n").optional()) \
          .combine(Return)
@@ -367,7 +347,7 @@ def lexer(code):
                 ret |
                 atom |
                 emptyline)
-    prog = (expr << string("\n").optional()).at_least(0)
+    prog = expr.at_least(0)
     return prog.parse(code)
 
 
@@ -397,10 +377,10 @@ def compile(parse_tree):
 
 
 def main():
-    with open("test_inputs/fib.py", "r") as fpy:
+    with open("test_inputs/assignments.py", "r") as fpy:
         lex = lexer(fpy.read())
-        #pprint(lex)
-        print(compile(lex))
+        pprint(lex)
+        #print(compile(lex))
 
 
 if __name__ == "__main__":
