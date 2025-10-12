@@ -248,7 +248,7 @@ def make_bin_op(keyword):
     def parser():
         lhs = yield ws >> (paren_expr | function_call | atom) << ws
         yield string(keyword)
-        rhs = yield ws >> (expr | function_call | atom) << ws
+        rhs = yield ws >> (expr | function_call | atom)
         return BinOp(lhs, keyword, rhs)
     return parser
 
