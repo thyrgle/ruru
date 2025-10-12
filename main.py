@@ -43,7 +43,7 @@ class PrintCall:
 
 
 @dataclass
-class Variable:
+class Param:
     name: str
     type_: str | None
 
@@ -67,7 +67,7 @@ class Entrypoint:
 @dataclass
 class FunctionDecl:
     name: str
-    params: list[Variable]
+    params: list[Param]
     body: list[Expr]
 
     @Program.scoped
@@ -206,7 +206,7 @@ ws_scope = whitespace.at_least(0)
 name = regex("[a-z][a-z0-9]*").desc("name")
 param = seq(name.desc("parameter"), 
             (string(":") >> ws >> name.desc("type")).optional()) \
-           .combine(Variable)
+           .combine(Param)
 params = param.sep_by(string(",") >> ws)
 
 
