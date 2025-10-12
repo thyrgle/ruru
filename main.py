@@ -172,7 +172,7 @@ class Assignment:
             result += self.name + " = " + str(self.rhs) + ";"
         else:
             result += "let mut " + self.name + ": Rc<dyn Any> = " + \
-                      "Box::new(" + str(self.rhs) + ");"
+                      "Rc::new(" + str(self.rhs) + ");"
             Program.initialized[cur_scope].add(self.name)
         # Resume as usual.
         Program.scope = cur_scope
