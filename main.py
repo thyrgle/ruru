@@ -171,7 +171,7 @@ class Assignment:
         if self.name in Program.initialized[cur_scope]:
             result += self.name + " = " + str(self.rhs) + ";"
         else:
-            result += "let mut " + self.name + ": Rc<dyn Any> = " + \
+            result += "let mut " + self.name + ": Rc<Unknown> = " + \
                       "Rc::new(" + str(self.rhs) + ");"
             Program.initialized[cur_scope].add(self.name)
         # Resume as usual.
