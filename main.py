@@ -2,7 +2,6 @@ from collections import defaultdict
 from dataclasses import dataclass
 from parsy import forward_declaration, generate, whitespace, regex, string, \
                   seq, peek
-from pprint import pprint
 
 
 class Program:
@@ -200,6 +199,16 @@ class BinOp(Expr):
         return result
 
 
+@dataclass
+class Atom(Expr):
+    value: str
+    type_: str
+
+    @Program.scoped
+    def __str__(self):
+        return self.value
+
+
 expr = forward_declaration()
 ws = whitespace.optional()
 ws_scope = whitespace.at_least(0)
@@ -234,8 +243,10 @@ function_call = seq(
     name, 
     string("(") >> expr.at_least(0) << string(")")
 ).combine(FunctionCall)
-integer = regex("[0-9]+").desc("int")
-decimal = regex("[0-9]+\.[0-9]+").desc("float")
+integer = regex("[0-9]+").map(lambda res: Atom(res, "int")) \
+                         .desc("int")
+decimal = regex("[0-9]+\.[0-9]+").map(lambda res: Atom(res, "float")) \
+                                 .desc("float")
 s = (string("\"") | string("'")) \
   + regex('[a-zA-Z0-9\ ]*') \
   + (string("\"") | string("'")).desc("string") # string and str are taken.
@@ -298,6 +309,7 @@ def lexer(code):
     control_flow = (if_stmt | elif_stmt | else_stmt |
                     while_stmt | for_stmt).desc("control flow")
 
+    # Special binary op that requires a name on lhs.
     assignment = seq(
         name.desc("name"),
         (string(":") >> ws >> name).optional().desc("type"),
@@ -330,7 +342,7 @@ def lexer(code):
         .desc("print invocation") \
         .combine(PrintCall)
 
-
+    # Handle this if statement as a special entrypoint for the program.
     entrypoint = seq(
             string("if __name__ == '__main__':\n    main()") |
             string('if __name__ == "__main__":\n    main()')
@@ -379,8 +391,8 @@ def compile(parse_tree):
 def main():
     with open("test_inputs/assignments.py", "r") as fpy:
         lex = lexer(fpy.read())
-        pprint(lex)
-        #print(compile(lex))
+        #pprint(lex)
+        print(compile(lex))
 
 
 if __name__ == "__main__":
