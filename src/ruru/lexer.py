@@ -111,7 +111,6 @@ def class_decl():
     return Class(n, contents)
 
 
-
 def lexer(code):
     if_stmt = ctrl_stmt("if")
     elif_stmt = ctrl_stmt("elif")
@@ -164,6 +163,7 @@ def lexer(code):
 
     expr.become(entrypoint | \
                 function_decl | \
+                class_decl | \
                 binary_op | \
                 print_call |
                 function_call | \
