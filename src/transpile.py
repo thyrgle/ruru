@@ -25,6 +25,16 @@ class Expr:
 
 
 @dataclass
+class Class:
+    name: str
+    body: list[Expr]
+
+    @Program.scoped
+    def __str__(self):
+        pass # TODO Need two parts in Rust I think!
+
+
+@dataclass
 class PrintCall:
     expr: Expr
     

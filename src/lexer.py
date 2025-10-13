@@ -1,6 +1,6 @@
 from .transpile import Param, ControlFlow, FunctionCall, Atom, BinOp, \
                         FunctionDecl, Assignment, Return, PrintCall, \
-                        Entrypoint, EmptyLine
+                        Entrypoint, EmptyLine, Class
 from parsy import forward_declaration, generate, whitespace, regex, string, \
                   seq, peek
 
@@ -93,6 +93,23 @@ def function_decl():
         else:
             break
     return FunctionDecl(n, p, contents)
+
+
+@generate
+def class_decl():
+    n = yield string("class") >> whitespace >> name
+    scope = yield peek(ws_scope.concat().map(len))
+    next_indent = scope
+    contents = []
+    while True:
+        next_indent = yield peek(ws_scope.concat().map(len))
+        if next_indent >= scope:
+            body = yield string(" " * scope) >> expr
+            contents.append(body)
+        else:
+            break
+    return Class(n, contents)
+
 
 
 def lexer(code):
