@@ -1,5 +1,5 @@
-from ..src.lexer import lexer
-from ..src.transpile import transpile
+from src.ruru.lexer import lexer
+from src.ruru.transpile import transpile
 
 
 TEST_INPUTS = "tests/test_inputs/"
