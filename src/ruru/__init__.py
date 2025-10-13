@@ -1,6 +1,6 @@
 import argparse
-from src.lexer import lexer
-from src.transpile import transpile 
+from .lexer import lexer
+from .transpile import transpile 
 
 
 def main():
@@ -11,7 +11,3 @@ def main():
     with open(args.file, "r") as fpy:
         lex = lexer(fpy.read())
         print(transpile(lex))
-
-
-if __name__ == "__main__":
-    main()
