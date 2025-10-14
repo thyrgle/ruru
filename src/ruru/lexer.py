@@ -1,6 +1,6 @@
 from .transpile import Param, ControlFlow, FunctionCall, Atom, BinOp, \
                         FunctionDecl, Assignment, Return, PrintCall, \
-                        Entrypoint, EmptyLine, Class, Variable
+                        Entrypoint, EmptyLine, Class, Variable, List
 from parsy import forward_declaration, generate, whitespace, regex, string, \
                   seq, peek
 
@@ -16,7 +16,7 @@ var = seq(name,
 param = seq(name.desc("parameter"), 
             (string(":") >> ws >> name.desc("type")).optional()) \
            .combine(Param)
-params = param.sep_by(string(",") >> ws)
+params = param.sep_by(string(",") << ws)
 
 
 def ctrl_stmt(keyword):
@@ -165,6 +165,10 @@ def lexer(code):
 
     emptyline = seq(string("\n")).combine(EmptyLine)
 
+    list_ = ((ws >> string("[") << ws) >> \
+            (ws >> expr << ws).sep_by(string(",")) << \
+            (ws >> string("]"))).combine(List)
+
     expr.become(entrypoint |
                 function_decl |
                 class_decl |
@@ -174,6 +178,7 @@ def lexer(code):
                 control_flow |
                 ret |
                 atom |
+                list_ |
                 emptyline)
     prog = expr.at_least(0)
     return prog.parse(code)

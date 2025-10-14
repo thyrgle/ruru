@@ -48,6 +48,20 @@ class Class:
         impl += "}\n"
         return struct + impl
 
+
+class List:
+    def __init__(self, *items):
+        self.items: list[Expr] = items
+
+    @Program.scoped
+    def __str__(self):
+        cur_scope = Program.scope
+        Program.scope = 0
+        result = "vec![" + ",".join([str(item) for item in self.items]) + "]"
+        Program.scope = cur_scope
+        return result
+
+
 @dataclass
 class Variable:
     name: str
@@ -208,16 +222,15 @@ class Assignment:
         cur_scope = Program.scope
         Program.scope = 0
         result = ""
-        if self.name in Program.initialized[cur_scope]:
+        if self.var.name in Program.initialized[cur_scope]:
             result += str(self.var) + " = " + str(self.rhs) + ";"
         else:
-            result += "let mut " + self.name + ": Rc<Unknown> = " + \
+            result += "let mut " + self.var.name + ": Rc<Unknown> = " + \
                       "Rc::new(" + str(self.rhs) + ");"
-            Program.initialized[cur_scope].add(self.name)
+            Program.initialized[cur_scope].add(self.var.name)
         # Resume as usual.
         Program.scope = cur_scope
         return result
-
 
 
 @dataclass
