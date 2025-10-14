@@ -31,7 +31,23 @@ class Class:
 
     @Program.scoped
     def __str__(self):
-        pass # TODO Need two parts in Rust I think!
+        struct = f"struct {self.name} {{\n"
+        impl = f"impl {self.name} {{\n"
+        Program.scope += 1
+        for stmt in self.body:
+            match stmt:
+                case Assignment():
+                    struct += str(stmt) + "\n"
+                case FunctionDecl():
+                    impl += str(stmt) + "\n"
+                case _:
+                    raise ValueError( # TODO Extend!
+                            "Must be assignment or func decl in class"
+                            )
+        Program.scope -= 1
+        struct += "}\n"
+        impl += "}\n"
+        return struct + impl
 
 
 @dataclass
@@ -92,7 +108,7 @@ class FunctionDecl:
         result += "\n".join([str(stmt) for stmt in self.body])
         Program.scope -= 1
         # End
-        result += "\n}"
+        result += "\n" + Program.scope * 4 * " " + "}"
         return result
 
 

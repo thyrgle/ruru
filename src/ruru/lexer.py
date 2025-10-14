@@ -8,7 +8,7 @@ from parsy import forward_declaration, generate, whitespace, regex, string, \
 expr = forward_declaration()
 ws = whitespace.optional()
 ws_scope = whitespace.at_least(0)
-name = regex("[a-z][a-z0-9]*").desc("name")
+name = regex("[_a-zA-Z][_a-zA-Z0-9]*").desc("name")
 param = seq(name.desc("parameter"), 
             (string(":") >> ws >> name.desc("type")).optional()) \
            .combine(Param)
@@ -98,7 +98,7 @@ def function_decl():
 
 @generate
 def class_decl():
-    n = yield string("class") >> whitespace >> name
+    n = yield string("class") >> whitespace >> name << string(":\n")
     scope = yield peek(ws_scope.concat().map(len))
     next_indent = scope
     contents = []
