@@ -10,6 +10,7 @@ ws = whitespace.optional()
 ws_scope = whitespace.at_least(0)
 name = regex("[_a-zA-Z][_a-zA-Z0-9]*").desc("name")
 var = seq(name,
+          string("`").optional(),
           (string(":") >> ws >> name.desc("type")).optional()) \
           .combine(Variable)
 param = seq(name.desc("parameter"), 

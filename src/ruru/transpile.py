@@ -52,6 +52,7 @@ class Class:
 @dataclass
 class Variable:
     name: str
+    lifetime: str | None
     type_: str
 
     @Program.scoped
