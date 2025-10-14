@@ -7,7 +7,7 @@ class Program:
     """
     scope: int = 0 # Number of spaces corresponds to scope / 4
     initialized: dict[int, set] = defaultdict(set) # Initialized vars in scope.
-    entrypoint = False # Did the user define a main function?
+    entrypoint: bool = False # Did the user define a main function?
     premain: bool = True # Global stuff to run before main if needed. TODO
     use_any: bool = False
     use_unknown: bool = False
