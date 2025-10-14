@@ -9,7 +9,6 @@ class Program:
     initialized: dict[int, set] = defaultdict(set) # Initialized vars in scope.
     entrypoint: bool = False # Did the user define a main function?
     premain: bool = True # Global stuff to run before main if needed. TODO
-    use_any: bool = False
     use_unknown: bool = False
     use_rc: bool = False
 
@@ -250,8 +249,8 @@ class Atom(Expr):
 
 def compute_preamble(result):
     preamble = ""
-    if Program.use_any:
-        preamble += "use std::any::Any;\n"
+    if Program.use_unknown:
+        preamble += "use ruru::Unknown;\n"
     if Program.use_rc:
         preamble += "use std::rc::Rc;\n"
     if preamble != "": # There were imports!
