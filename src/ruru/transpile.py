@@ -211,6 +211,17 @@ class ControlFlow:
 
 
 @dataclass
+class With:
+    stmt: Expr # Such and such
+    name: Expr # as name
+    body: list[Expr]
+
+    def __str__(self):
+        return "" # TODO Convert to Rust somehow.
+
+
+
+@dataclass
 class Return:
     expr: Expr
 

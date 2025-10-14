@@ -1,7 +1,7 @@
 from .transpile import Param, ControlFlow, FunctionCall, Atom, BinOp, \
                         FunctionDecl, Assignment, Return, PrintCall, \
                         Entrypoint, EmptyLine, Class, Variable, List, Dict, \
-                        Yield
+                        Yield, With
 from parsy import forward_declaration, generate, whitespace, regex, string, \
                   seq, peek
 
@@ -18,6 +18,23 @@ param = seq(name.desc("parameter"),
             (string(":") >> ws >> name.desc("type")).optional()) \
            .combine(Param)
 params = param.sep_by(string(",") << ws)
+
+
+def with_stmt():
+    yield string("with")
+    stmt = yield ws >> expr << ws << string("as")
+    with_name = yield ws >> name << string(":\n")
+    scope = yield peek(ws_scope.concat().map(len))
+    next_indent = scope
+    contents = []
+    while True:
+        next_indent = yield peek(ws_scope.concat().map(len))
+        if next_indent == scope:
+            body = yield string(" " * scope) >> expr
+            contents.append(body)
+        else:
+            break
+    return With(stmt, with_name, contents)
 
 
 def ctrl_stmt(keyword):
