@@ -9,9 +9,9 @@ class Program:
     initialized: dict[int, set] = defaultdict(set) # Initialized vars in scope.
     entrypoint = False # Did the user define a main function?
     premain = True # Global stuff to run before main if needed. TODO
-    use_any = True
+    use_any = False
     use_unknown = False
-    use_rc = True
+    use_rc = False
 
     @staticmethod
     def scoped(f):
