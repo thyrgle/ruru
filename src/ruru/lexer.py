@@ -153,6 +153,8 @@ def lexer(code):
 
     ret = seq(string("return") >> ws >> expr << string("\n").optional()) \
          .combine(Return)
+    yield_ = seq(string("return") >> ws >> expr << string("\n").optional()) \
+            .combine(Return)
     print_call = seq(string("print(") >> expr << string(")")) \
         .desc("print invocation") \
         .combine(PrintCall)
@@ -185,6 +187,7 @@ def lexer(code):
                 function_call |
                 control_flow |
                 ret |
+                yield_ |
                 atom |
                 list_ |
                 dict_ |
