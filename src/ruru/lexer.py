@@ -1,6 +1,6 @@
 from .transpile import Param, ControlFlow, FunctionCall, Atom, BinOp, \
                         FunctionDecl, Assignment, Return, PrintCall, \
-                        Entrypoint, EmptyLine, Class, Variable, List
+                        Entrypoint, EmptyLine, Class, Variable, List, Dict
 from parsy import forward_declaration, generate, whitespace, regex, string, \
                   seq, peek
 
@@ -168,6 +168,14 @@ def lexer(code):
     list_ = ((ws >> string("[") << ws) >> \
             (ws >> expr << ws).sep_by(string(",")) << \
             (ws >> string("]"))).combine(List)
+    #TODO: Handle semicolon!
+    dict_ = ((ws >> string("{") << ws) >> \
+            (ws >> expr << ws).sep_by(string(",")) << \
+            (ws >> string("}"))).combine(Dict)
+    set_ = ((ws >> string("{") << ws) >> \
+            (ws >> expr << ws).sep_by(string(",")) << \
+            (ws >> string("}"))).combine(Dict)
+
 
     expr.become(entrypoint |
                 function_decl |
@@ -179,6 +187,8 @@ def lexer(code):
                 ret |
                 atom |
                 list_ |
+                dict_ |
+                set_ |
                 emptyline)
     prog = expr.at_least(0)
     return prog.parse(code)

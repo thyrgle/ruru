@@ -62,6 +62,28 @@ class List:
         return result
 
 
+class Dict:
+    def __init__(self, *items):
+        # Follows a key value pair.
+        self.keys = []
+        self.values = []
+        # TODO
+
+    def __str__(self):
+        for key, value in zip(self.key, self.value):
+            pass
+
+
+
+class Set:
+    def __init__(self, *elems):
+        self.elems = elems
+
+    def __str__(self):
+        for elem in self.elems:
+            pass # TODO
+
+
 @dataclass
 class Variable:
     name: str
