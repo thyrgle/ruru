@@ -162,13 +162,13 @@ def lexer(code):
 
     emptyline = seq(string("\n")).combine(EmptyLine)
 
-    expr.become(entrypoint | \
-                function_decl | \
-                class_decl | \
-                binary_op | \
+    expr.become(entrypoint |
+                function_decl |
+                class_decl |
+                binary_op |
                 print_call |
-                function_call | \
-                control_flow | \
+                function_call |
+                control_flow |
                 ret |
                 atom |
                 emptyline)
