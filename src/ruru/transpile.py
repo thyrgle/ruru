@@ -58,7 +58,10 @@ class Variable:
     @Program.scoped
     def __str__(self):
         if self.type_ is None:
-            return self.name + ": Unknown"
+            self.type_ = "Unknown"
+        if self.lifetime is None:
+            return self.name + ": " + "Rc<" + self.type + ">"
+        # Lifetime is `.
         return self.name + ": " + self.type
 
 
