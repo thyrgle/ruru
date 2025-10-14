@@ -65,11 +65,11 @@ integer = regex("[0-9]+").map(lambda res: Atom(res, "int")) \
                          .desc("int")
 decimal = regex("[0-9]+\.[0-9]+").map(lambda res: Atom(res, "float")) \
                                  .desc("float")
-s = (string("\"") | string("'")) \
+string_ = (string("\"") | string("'")) \
   + regex('[a-zA-Z0-9\ ]*') \
   + (string("\"") | string("'")).desc("string") # string and str are taken.
 
-atom = (name | decimal | integer | s).desc("atom")
+atom = (name | decimal | integer | string_).desc("atom")
 
 
 def make_bin_op(keyword):
