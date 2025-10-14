@@ -1,6 +1,7 @@
 from .transpile import Param, ControlFlow, FunctionCall, Atom, BinOp, \
                         FunctionDecl, Assignment, Return, PrintCall, \
-                        Entrypoint, EmptyLine, Class, Variable, List, Dict
+                        Entrypoint, EmptyLine, Class, Variable, List, Dict, \
+                        Yield
 from parsy import forward_declaration, generate, whitespace, regex, string, \
                   seq, peek
 
@@ -154,7 +155,7 @@ def lexer(code):
     ret = seq(string("return") >> ws >> expr << string("\n").optional()) \
          .combine(Return)
     yield_ = seq(string("return") >> ws >> expr << string("\n").optional()) \
-            .combine(Return)
+            .combine(Yield)
     print_call = seq(string("print(") >> expr << string(")")) \
         .desc("print invocation") \
         .combine(PrintCall)

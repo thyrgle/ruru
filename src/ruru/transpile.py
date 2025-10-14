@@ -225,6 +225,20 @@ class Return:
 
 
 @dataclass
+class Yield:
+    expr: Expr
+
+    @Program.scoped
+    def __str__(self):
+        result = "yield "
+        cur_scope = Program.scope
+        Program.scope = 0
+        result += str(self.expr) + ";"
+        Program.scope = cur_scope
+        return result
+
+
+@dataclass
 class EmptyLine(Expr):
     noop: str
     """Essentially a no-op when a blank line is encountered."""
