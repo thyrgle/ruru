@@ -77,6 +77,7 @@ class Param:
         else:
             return self.name + ": " + self.type_
 
+
 @dataclass
 class Entrypoint:
     code: str # Not really needed, but parsy always returns something.
