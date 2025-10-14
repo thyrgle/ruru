@@ -8,10 +8,10 @@ class Program:
     scope: int = 0 # Number of spaces corresponds to scope / 4
     initialized: dict[int, set] = defaultdict(set) # Initialized vars in scope.
     entrypoint = False # Did the user define a main function?
-    premain = True # Global stuff to run before main if needed. TODO
-    use_any = False
-    use_unknown = False
-    use_rc = False
+    premain: bool = True # Global stuff to run before main if needed. TODO
+    use_any: bool = False
+    use_unknown: bool = False
+    use_rc: bool = False
 
     @staticmethod
     def scoped(f):
