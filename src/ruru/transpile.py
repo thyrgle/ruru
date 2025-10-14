@@ -49,6 +49,17 @@ class Class:
         impl += "}\n"
         return struct + impl
 
+@dataclass
+class Variable:
+    name: str
+    type_: str
+
+    @Program.scoped
+    def __str__(self):
+        if self.type_ is None:
+            return self.name + ": Unknown"
+        return self.name + ": " + self.type
+
 
 @dataclass
 class PrintCall:
@@ -185,8 +196,7 @@ class EmptyLine(Expr):
 
 @dataclass
 class Assignment:
-    name: str
-    type_: str
+    var: Variable
     rhs: Expr
 
     @Program.scoped
@@ -196,7 +206,7 @@ class Assignment:
         Program.scope = 0
         result = ""
         if self.name in Program.initialized[cur_scope]:
-            result += self.name + " = " + str(self.rhs) + ";"
+            result += str(self.var) + " = " + str(self.rhs) + ";"
         else:
             result += "let mut " + self.name + ": Rc<Unknown> = " + \
                       "Rc::new(" + str(self.rhs) + ");"

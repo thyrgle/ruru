@@ -1,6 +1,6 @@
 from .transpile import Param, ControlFlow, FunctionCall, Atom, BinOp, \
                         FunctionDecl, Assignment, Return, PrintCall, \
-                        Entrypoint, EmptyLine, Class
+                        Entrypoint, EmptyLine, Class, Variable
 from parsy import forward_declaration, generate, whitespace, regex, string, \
                   seq, peek
 
@@ -9,6 +9,9 @@ expr = forward_declaration()
 ws = whitespace.optional()
 ws_scope = whitespace.at_least(0)
 name = regex("[_a-zA-Z][_a-zA-Z0-9]*").desc("name")
+var = seq(name,
+          (string(":") >> ws >> name.desc("type")).optional()) \
+          .combine(Variable)
 param = seq(name.desc("parameter"), 
             (string(":") >> ws >> name.desc("type")).optional()) \
            .combine(Param)
@@ -123,8 +126,7 @@ def lexer(code):
 
     # Special binary op that requires a name on lhs.
     assignment = seq(
-        name.desc("name"),
-        (string(":") >> ws >> name).optional().desc("type"),
+        var,
         ws >> string("=") >> ws >> expr << string("\n").optional()
     ).combine(Assignment)
 
@@ -137,7 +139,7 @@ def lexer(code):
     geq = make_bin_op(">=")
     less_than = make_bin_op("<")
     leq = make_bin_op("<=")
-    binary_op = ((addition | \
+    binary_op = (addition | \
                 subtraction | \
                 multiply | \
                 assignment | \
@@ -146,7 +148,7 @@ def lexer(code):
                 greater_than | \
                 geq | \
                 less_than | \
-                leq)).desc("binary op")
+                leq).desc("binary op")
 
     ret = seq(string("return") >> ws >> expr << string("\n").optional()) \
          .combine(Return)
