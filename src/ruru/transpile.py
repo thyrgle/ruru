@@ -69,10 +69,12 @@ class Dict:
         self.values = []
         # TODO
 
+    @Program.scoped
     def __str__(self):
+        result = "let " + self.name + " = HashMap::new();\n"
         for key, value in zip(self.key, self.value):
-            pass
-
+            result += self.name + ".insert(" + key + "," + value + ");\n"
+        return result
 
 
 class Set:
