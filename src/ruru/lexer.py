@@ -1,7 +1,7 @@
 from .transpile import Param, ControlFlow, FunctionCall, Atom, BinOp, \
                         FunctionDecl, Assignment, Return, PrintCall, \
                         Entrypoint, EmptyLine, Class, Variable, List, Dict, \
-                        Yield, With
+                        Yield, With, For
 from parsy import forward_declaration, generate, whitespace, regex, string, \
                   seq, peek
 
@@ -99,6 +99,27 @@ def else_stmt():
         else:
             break
     return ControlFlow("else", None, contents)
+
+
+@generate
+def for_stmt():
+    """ For is *similar* to the other control flow, but it is stricter in form.
+    for name in iterable:
+    """
+    # TODO
+    iter_name = yield string("for") >> name << ws << "in" << ws
+    iterable = yield expr >> ":\n"
+    scope = yield peek(ws_scope.concat().map(len))
+    next_indent = scope
+    contents = []
+    while True:
+        next_indent = yield peek(ws_scope.concat().map(len))
+        if next_indent == scope:
+            body = yield string(" " * scope) >> expr
+            contents.append(body)
+        else:
+            break
+    return For(iter_name, iterable, body)
 
 
 @generate

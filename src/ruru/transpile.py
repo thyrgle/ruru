@@ -181,7 +181,6 @@ class FunctionCall(Expr):
 # Maps control statements to the equivalent control statement in Rust.
 _ctrl_map: dict[str, str] = {
     "while": "while",
-    "for": "for",
     "if": "if",
     "elif": "else if",
     "else": "else"
@@ -207,6 +206,21 @@ class ControlFlow:
         result += ";".join([str(stmt) for stmt in self.body])
         Program.scope = cur_scope
         result += "\n" + "    " * cur_scope + "}"
+        return result
+
+
+@dataclass
+class For:
+    iter_name: str
+    iterable: Expr
+    body: list[Expr]
+    
+    @Program.scoped
+    def __str__(self):
+        result = self.iter_name + "in " + str(self.iterable) + "{\n"
+        Program.scope += 1
+        result += "\n".join([str(stmt) for stmt in self.body])
+        Program.scope -= 1
         return result
 
 
