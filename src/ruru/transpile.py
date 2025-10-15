@@ -76,12 +76,15 @@ class Dict:
 
 
 class Set:
-    def __init__(self, *elems):
+    def __init__(self, name, *elems):
+        self.name = name
         self.elems = elems
 
     def __str__(self):
+        result = "let " + self.name + ": HashSet<Unknown> = HashSet::new();\n"
         for elem in self.elems:
-            pass # TODO
+            result += self.name + ".insert(" + str(elem) + ");\n"
+        return result
 
 
 @dataclass
