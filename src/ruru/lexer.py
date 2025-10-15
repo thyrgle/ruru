@@ -211,7 +211,9 @@ def lexer(code):
             (ws >> string("]"))).combine(List)
     #TODO: Handle semicolon!
     dict_ = ((ws >> string("{") << ws) >> \
-            (ws >> expr << ws).sep_by(string(",")) << \
+            seq(ws >> expr << ws, # Key
+                string(":") >> ws >> expr << ws) # Value
+             .sep_by(string(",")) <<
             (ws >> string("}"))).combine(Dict)
     set_ = ((ws >> string("{") << ws) >> \
             (ws >> expr << ws).sep_by(string(",")) << \
