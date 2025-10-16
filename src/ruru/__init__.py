@@ -21,7 +21,7 @@ def main():
     parser.add_argument("--lexer", help="Lexer output.", action="store_true")
     parser.add_argument("--lexer-partial", 
                         help="Lexer using parse_partial",
-                        action="store_true") # TODO Does nothing atm.
+                        action="store_true")
     parser.add_argument("--rust", help="Rust output.", action="store_true")
     args = parser.parse_args()
     with open(args.file, "r") as fpy:
