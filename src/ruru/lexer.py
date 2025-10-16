@@ -1,7 +1,7 @@
 from .transpile import Param, ControlFlow, FunctionCall, Atom, BinOp, \
                         FunctionDecl, Assignment, Return, PrintCall, \
                         Entrypoint, EmptyLine, Class, Variable, List, Dict, \
-                        Yield, With, For
+                        Yield, With, For, IntegerLiteral, StringLiteral, Name
 from parsy import forward_declaration, generate, whitespace, regex, string, \
                   seq, peek
 
@@ -9,7 +9,9 @@ from parsy import forward_declaration, generate, whitespace, regex, string, \
 expr = forward_declaration()
 ws = whitespace.optional()
 ws_scope = whitespace.at_least(0)
-name = regex("[_a-zA-Z][_a-zA-Z0-9]*").desc("name")
+name = regex(r"\w+") \
+      .desc("name") \
+      .map(Name)
 var = seq(name,
           string("`").optional(),
           (string(":") >> ws >> name.desc("type")).optional()) \
@@ -62,14 +64,13 @@ function_call = seq(
     string("(") >> expr.at_least(0) << string(")")
 ).combine(FunctionCall)
 integer = regex("[0-9]+").map(lambda res: Atom(res, "int")) \
-                         .desc("int")
-decimal = regex("[0-9]+\.[0-9]+").map(lambda res: Atom(res, "float")) \
+                         .desc("int") \
+                         .combine(IntegerLiteral)
+decimal = regex("[0-9]*+\.[0-9]+").map(lambda res: Atom(res, "float")) \
                                  .desc("float")
-string_ = (string("\"") | string("'")) \
-  + regex('[a-zA-Z0-9\ ]*') \
-  + (string("\"") | string("'")).desc("string") # string and str are taken.
+string_ = (string('"') >> regex(r'[^"\\]+') << string('"')).map(StringLiteral)
 
-atom = (name | decimal | integer | string_).desc("atom")
+atom = (string_ | decimal | integer | name).desc("atom")
 
 
 def make_bin_op(keyword):
@@ -124,7 +125,7 @@ def for_stmt():
 
 @generate
 def function_decl():
-    n = yield string("def") >> whitespace >> name
+    n = yield string("def") >> whitespace >> ws >> name
     p = yield string("(") >> params << string("):\n")
     scope = yield peek(ws_scope.concat().map(len))
     next_indent = scope
@@ -155,84 +156,86 @@ def class_decl():
     return Class(n, contents)
 
 
-def lexer(code):
-    if_stmt = ctrl_stmt("if")
-    elif_stmt = ctrl_stmt("elif")
-    while_stmt = ctrl_stmt("while")
-    for_stmt = ctrl_stmt("for")
+if_stmt = ctrl_stmt("if")
+elif_stmt = ctrl_stmt("elif")
+while_stmt = ctrl_stmt("while")
 
-    control_flow = (if_stmt | elif_stmt | else_stmt |
-                    while_stmt | for_stmt).desc("control flow")
+control_flow = (if_stmt | elif_stmt | else_stmt |
+                while_stmt | for_stmt).desc("control flow")
 
-    # Special binary op that requires a name on lhs.
-    assignment = seq(
-        var,
-        ws >> string("=") >> ws >> expr << string("\n").optional()
-    ).combine(Assignment)
+# Special binary op that requires a name on lhs.
+assignment = seq(
+    var,
+    ws >> string("=") >> ws >> expr << string("\n").optional()
+).combine(Assignment)
 
-    addition = make_bin_op("+")
-    subtraction = make_bin_op("-")
-    multiply = make_bin_op("*")
-    equality = make_bin_op("==")
-    not_eq = make_bin_op("!=")
-    greater_than = make_bin_op(">")
-    geq = make_bin_op(">=")
-    less_than = make_bin_op("<")
-    leq = make_bin_op("<=")
-    binary_op = (addition | \
-                subtraction | \
-                multiply | \
-                assignment | \
-                equality | \
-                not_eq | \
-                greater_than | \
-                geq | \
-                less_than | \
-                leq).desc("binary op")
+addition = make_bin_op("+")
+subtraction = make_bin_op("-")
+multiply = make_bin_op("*")
+equality = make_bin_op("==")
+not_eq = make_bin_op("!=")
+greater_than = make_bin_op(">")
+geq = make_bin_op(">=")
+less_than = make_bin_op("<")
+leq = make_bin_op("<=")
+binary_op = (addition | \
+             subtraction | \
+             multiply | \
+             assignment | \
+             equality | \
+             not_eq | \
+             greater_than | \
+             geq | \
+             less_than | \
+             leq).desc("binary op")
 
-    ret = seq(string("return") >> ws >> expr << string("\n").optional()) \
+return_ = seq(string("return") >> ws >> expr << string("\n").optional()) \
          .combine(Return)
-    yield_ = seq(string("return") >> ws >> expr << string("\n").optional()) \
-            .combine(Yield)
-    print_call = seq(string("print(") >> expr << string(")")) \
-        .desc("print invocation") \
-        .combine(PrintCall)
+yield_ = seq(string("return") >> ws >> expr << string("\n").optional()) \
+        .combine(Yield)
+print_call = (string("print(") >> expr.sep_by(string(",")) << string(")")) \
+    .desc("print call").map(PrintCall)
 
-    # Handle this if statement as a special entrypoint for the program.
-    entrypoint = seq(
-            string("if __name__ == '__main__':\n    main()") |
-            string('if __name__ == "__main__":\n    main()')
-            ).desc("entrypoint").combine(Entrypoint)
+# Handle this if statement as a special entrypoint for the program.
+entrypoint = seq(
+        string("if __name__ == '__main__':\n    main()") |
+        string('if __name__ == "__main__":\n    main()')
+        ).desc("entrypoint").combine(Entrypoint)
 
-    emptyline = seq(string("\n")).combine(EmptyLine)
+emptyline = seq(string("\n")).combine(EmptyLine)
 
-    list_ = ((ws >> string("[") << ws) >> \
-            (ws >> expr << ws).sep_by(string(",")) << \
-            (ws >> string("]"))).combine(List)
-    #TODO: Handle semicolon!
-    dict_ = ((ws >> string("{") << ws) >> \
-            seq(ws >> expr << ws, # Key
-                string(":") >> ws >> expr << ws) # Value
-             .sep_by(string(",")) <<
-            (ws >> string("}"))).combine(Dict)
-    set_ = ((ws >> string("{") << ws) >> \
-            (ws >> expr << ws).sep_by(string(",")) << \
-            (ws >> string("}"))).combine(Dict)
+list_ = ((ws >> string("[") << ws) >> \
+         (ws >> expr << ws).sep_by(string(",")) << \
+         (ws >> string("]"))).combine(List)
+#TODO: Handle semicolon!
+dict_ = ((ws >> string("{") << ws) >> \
+          seq(ws >> expr << ws, # Key
+              string(":") >> ws >> expr << ws) # Value
+         .sep_by(string(",")) << (ws >> string("}"))).combine(Dict)
+set_ = ((ws >> string("{") << ws) >> \
+        (ws >> expr << ws).sep_by(string(",")) << \
+        (ws >> string("}"))).combine(Dict)
+
+expr.become(entrypoint |
+            print_call |
+            function_call |
+            function_decl |
+            class_decl |
+            binary_op |
+            control_flow |
+            return_ |
+            yield_ |
+            atom |
+            list_ |
+            dict_ |
+            set_ |
+            emptyline)
+prog = expr.at_least(0)
 
 
-    expr.become(entrypoint |
-                function_decl |
-                class_decl |
-                binary_op |
-                print_call |
-                function_call |
-                control_flow |
-                ret |
-                yield_ |
-                atom |
-                list_ |
-                dict_ |
-                set_ |
-                emptyline)
-    prog = expr.at_least(0)
+def lexer(code):
     return prog.parse(code)
+
+
+def partial_lexer(code):
+    return prog.parse_partial(code)

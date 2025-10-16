@@ -2,6 +2,18 @@ from collections import defaultdict
 from dataclasses import dataclass
 
 
+class Expr:
+    pass
+
+
+@dataclass
+class Name(Expr):
+    name: str
+
+    def __str__(self):
+        return f'{self.name}'
+
+
 class Program:
     """Keeps track of scope and which variables have been initialized.
     """
@@ -19,13 +31,9 @@ class Program:
         return scoped_f
 
 
-class Expr:
-    pass
-
-
 @dataclass
 class Class:
-    name: str
+    name: Name
     body: list[Expr]
 
     @Program.scoped
@@ -91,7 +99,7 @@ class Set:
 
 @dataclass
 class Variable:
-    name: str
+    name: Name
     lifetime: str | None
     type_: str
 
@@ -106,31 +114,57 @@ class Variable:
 
 
 @dataclass
-class PrintCall:
-    expr: Expr
+class StringLiteral(Expr):
+    contents: str
     
+    def __str__(self):
+        return f'"{self.contents}"'
+
+
+@dataclass
+class IntegerLiteral:
+    contents: str
+
+    def __str__(self):
+        return self.contents
+
+
+@dataclass
+class PrintCall:
+    exprs: list[Expr]
+
     @Program.scoped
     def __str__(self):
         cur_scope = Program.scope
         Program.scope = 0
         result = "println!("
-        result += str(self.expr) 
-        result += ");"
+        if len(self.exprs) == 0:
+            return 'println!("")'
+        elif len(self.exprs) == 1:
+            match self.exprs[0]:
+                case StringLiteral():
+                    result += str(self.exprs[0]) 
+                case IntegerLiteral():
+                    result += '"{}", ' + str(self.exprs[0])
+            result += ");"
+        else:
+            for expr in self.exprs:
+                pass # TODO
         Program.scope = cur_scope
         return result
 
 
 @dataclass
 class Param:
-    name: str
+    name: Name
     type_: str | None
 
     @Program.scoped
     def __str__(self):
         if self.type_ is None:
-            return self.name + ": Unknown"
+            return str(self.name) + ": Unknown"
         else:
-            return self.name + ": " + self.type_
+            return str(self.name) + ": " + self.type_
 
 
 @dataclass
@@ -145,14 +179,14 @@ class Entrypoint:
 
 @dataclass
 class FunctionDecl:
-    name: str
+    name: Name
     params: list[Param]
     body: list[Expr]
 
     @Program.scoped
     def __str__(self):
         # Header
-        result = "fn " + self.name + "(" 
+        result = "fn " + str(self.name) + "(" 
         if self.params is not None: # Check if there are no parameters.
             result += \
             ", ".join([str(param) for param in self.params]) + \
@@ -170,15 +204,15 @@ class FunctionDecl:
 
 @dataclass
 class FunctionCall(Expr):
-    name: str
+    name: Name
     args: list[str]
 
     @Program.scoped
     def __str__(self):
         if len(self.args) == 1:
-            return self.name + "(" + str(self.args[0]) + ")"
+            return str(self.name) + "(" + str(self.args[0]) + ")"
         else:
-            return self.name + "(" + \
+            return str(self.name) + "(" + \
                 ", ".join([str(arg) for arg in self.args]) + \
             ")"
 
@@ -216,13 +250,13 @@ class ControlFlow:
 
 @dataclass
 class For:
-    iter_name: str
+    iter_name: Name
     iterable: Expr
     body: list[Expr]
     
     @Program.scoped
     def __str__(self):
-        result = self.iter_name + "in " + str(self.iterable) + "{\n"
+        result = str(self.iter_name) + "in " + str(self.iterable) + "{\n"
         Program.scope += 1
         result += "\n".join([str(stmt) for stmt in self.body])
         Program.scope -= 1
@@ -232,7 +266,7 @@ class For:
 @dataclass
 class With:
     stmt: Expr # Such and such
-    name: Expr # as name
+    name: Name # as name
     body: list[Expr]
 
     def __str__(self):
@@ -291,7 +325,7 @@ class Assignment:
         if self.var.name in Program.initialized[cur_scope]:
             result += str(self.var) + " = " + str(self.rhs) + ";"
         else:
-            result += "let mut " + self.var.name + ": Rc<Unknown> = " + \
+            result += "let mut " + str(self.var.name) + ": Rc<Unknown> = " + \
                       "Rc::new(" + str(self.rhs) + ");"
             Program.initialized[cur_scope].add(self.var.name)
         # Resume as usual.
