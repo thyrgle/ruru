@@ -13,6 +13,12 @@ TEST_OUTPUTS = "tests/test_outputs/"
 # Each input file has a corresponding output file.
 INPUT_FILES = sorted(os.listdir(TEST_INPUTS))
 
+# Don't run these files if they exist.
+if '__pycache__' in INPUT_FILES:
+    INPUT_FILES.remove('__pycache__')
+if 'temp.rs' in INPUT_FILES:
+    INPUT_FILES.remove('temp.rs')
+
 
 def run(ruru_code):
     rust_code = transpile(lexer(ruru_code))
