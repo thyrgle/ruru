@@ -157,13 +157,18 @@ class PrintCall:
 
 @dataclass
 class RangeCall:
-    start: IntegerLiteral | None
-    stop: IntegerLiteral # Must always have a stop.
-    step: IntegerLiteral | None
+    param1: IntegerLiteral # Must have at least one param.
+    param2: IntegerLiteral | None
+    param3: IntegerLiteral | None
 
 
     def __str__(self):
-        return "" # TODO
+        if self.param2 is None: # Only param1 is in.
+            return f"(0..{self.param1})"
+        elif self.param3 is None:
+            return f"({self.param1}..{self.param2})"
+        else:
+            pass # TODO: Incorporate step somehow.
 
 
 @dataclass
