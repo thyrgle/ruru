@@ -1,5 +1,3 @@
-from io import StringIO
-from contextlib import redirect_stdout
 import os
 import pytest
 import subprocess
@@ -35,10 +33,11 @@ def run(ruru_code):
 @pytest.mark.parametrize("file_name", INPUT_FILES)
 def test_outputs(file_name):
     with open(TEST_INPUTS + file_name) as file:
-        exec_output = StringIO()
-        with redirect_stdout(exec_output):
-            exec(file.read())
-        assert run(file.read()) == exec_output.getvalue().encode("utf-8")
+        contents = file.read()
+        python_output = subprocess.run(["python3", TEST_INPUTS + file_name],
+                                       capture_output=True).stdout
+        run_output = run(contents)
+        assert run_output == python_output
 
 
 def test_rust_outputs():
