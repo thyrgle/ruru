@@ -76,9 +76,9 @@ atom = (string_ | decimal | integer | name).desc("atom")
 def make_bin_op(keyword):
     @generate
     def parser():
-        lhs = yield ws >> (paren_expr | function_call | atom) << ws
+        lhs = yield ws >> (function_call | paren_expr | atom) << ws
         yield string(keyword)
-        rhs = yield ws >> (expr | function_call | atom)
+        rhs = yield ws >> (function_call | atom | expr) << ws
         return BinOp(lhs, keyword, rhs)
     return parser
 
@@ -126,7 +126,9 @@ def for_stmt():
 @generate
 def function_decl():
     n = yield string("def") >> whitespace >> ws >> name
-    p = yield string("(") >> params << string("):\n")
+    p = yield string("(") >> params << string(")")
+    return_type = yield (string(":\n").map(lambda res: None) | 
+                         string(" -> ") >> ws >> name << string(":\n"))
     scope = yield peek(ws_scope.concat().map(len))
     next_indent = scope
     contents = []
@@ -137,7 +139,7 @@ def function_decl():
             contents.append(body)
         else:
             break
-    return FunctionDecl(n, p, contents)
+    return FunctionDecl(n, p, return_type, contents)
 
 
 @generate
@@ -220,12 +222,12 @@ set_ = ((ws >> string("{") << ws) >> \
         (ws >> string("}"))).combine(Dict)
 
 expr.become(entrypoint |
+            binary_op |
             print_call |
             range_call |
             function_call |
             function_decl |
             class_decl |
-            binary_op |
             control_flow |
             return_ |
             yield_ |

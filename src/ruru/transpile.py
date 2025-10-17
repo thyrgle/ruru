@@ -97,6 +97,11 @@ class Set:
         return result
 
 
+_type_map = {
+    "int": "i32"
+}
+
+
 @dataclass
 class Variable:
     name: Name
@@ -108,9 +113,9 @@ class Variable:
         if self.type_ is None:
             self.type_ = "Unknown"
         if self.lifetime is None:
-            return self.name + ": " + "Rc<" + self.type + ">"
+            return self.name + ": " + "Rc<" + _type_map[self.type] + ">"
         # Lifetime is `.
-        return self.name + ": " + self.type
+        return self.name + ": " + _type_map[self.type]
 
 
 @dataclass
@@ -122,7 +127,7 @@ class StringLiteral(Expr):
 
 
 @dataclass
-class IntegerLiteral:
+class IntegerLiteral(Expr):
     contents: str
 
     @Program.scoped
@@ -143,10 +148,10 @@ class PrintCall:
             return 'println!("")'
         elif len(self.exprs) == 1:
             match self.exprs[0]:
-                case Name():
-                    result += '"{}", ' + str(self.exprs[0])
                 case StringLiteral():
                     result += str(self.exprs[0])
+                case _:
+                    result += '"{}", ' + str(self.exprs[0])
             result += ");"
         else:
             for expr in self.exprs:
@@ -174,7 +179,7 @@ class Param:
         if self.type_ is None:
             return str(self.name) + ": Unknown"
         else:
-            return str(self.name) + ": " + self.type_
+            return str(self.name) + ": " + _type_map[str(self.type_)]
 
 
 @dataclass
@@ -191,6 +196,7 @@ class Entrypoint:
 class FunctionDecl:
     name: Name
     params: list[Param]
+    return_type: Name | None
     body: list[Expr]
 
     @Program.scoped
@@ -200,9 +206,13 @@ class FunctionDecl:
         if self.params is not None: # Check if there are no parameters.
             result += \
             ", ".join([str(param) for param in self.params]) + \
-            ") {\n"
+            ")"
         else:
-            result += ") {\n"
+            result += ")"
+        if self.return_type is None:
+            result += " {\n"
+        else:
+            result += " -> " + _type_map[self.return_type.name] + " {\n"
         # Body
         Program.scope += 1
         result += "\n".join([str(stmt) for stmt in self.body])
