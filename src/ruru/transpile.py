@@ -143,10 +143,10 @@ class PrintCall:
             return 'println!("")'
         elif len(self.exprs) == 1:
             match self.exprs[0]:
-                case StringLiteral():
-                    result += str(self.exprs[0]) 
-                case IntegerLiteral():
+                case Name():
                     result += '"{}", ' + str(self.exprs[0])
+                case StringLiteral():
+                    result += str(self.exprs[0])
             result += ");"
         else:
             for expr in self.exprs:
