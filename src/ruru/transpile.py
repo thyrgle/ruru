@@ -125,6 +125,7 @@ class StringLiteral(Expr):
 class IntegerLiteral:
     contents: str
 
+    @Program.scoped
     def __str__(self):
         return self.contents
 
@@ -158,17 +159,9 @@ class PrintCall:
 @dataclass
 class RangeCall:
     param1: IntegerLiteral # Must have at least one param.
-    param2: IntegerLiteral | None
-    param3: IntegerLiteral | None
-
 
     def __str__(self):
-        if self.param2 is None: # Only param1 is in.
-            return f"(0..{self.param1})"
-        elif self.param3 is None:
-            return f"({self.param1}..{self.param2})"
-        else:
-            pass # TODO: Incorporate step somehow.
+        return f"(0..{self.param1})" # TODO: multiple params
 
 
 @dataclass
@@ -273,10 +266,12 @@ class For:
     
     @Program.scoped
     def __str__(self):
-        result = str(self.iter_name) + "in " + str(self.iterable) + "{\n"
+        result = "for " + str(self.iter_name) + " in " + str(self.iterable) + \
+                "{\n"
         Program.scope += 1
         result += "\n".join([str(stmt) for stmt in self.body])
         Program.scope -= 1
+        result += "\n}"
         return result
 
 

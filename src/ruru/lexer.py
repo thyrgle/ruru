@@ -64,9 +64,8 @@ function_call = seq(
     name, 
     string("(") >> expr.at_least(0) << string(")")
 ).combine(FunctionCall)
-integer = regex("[0-9]+").map(lambda res: Atom(res, "int")) \
-                         .desc("int") \
-                         .combine(IntegerLiteral)
+integer = regex("[0-9]+").map(IntegerLiteral) \
+                         .desc("int")
 decimal = regex(r"[0-9]*+\.[0-9]+").map(lambda res: Atom(res, "float")) \
                                  .desc("float")
 string_ = (string('"') >> regex(r'[^"\\]+') << string('"')).map(StringLiteral)
@@ -109,8 +108,8 @@ def for_stmt():
     for name in iterable:
     """
     # TODO
-    iter_name = yield string("for") >> name << ws << "in" << ws
-    iterable = yield expr >> ":\n"
+    iter_name = yield string("for") >> ws >> name << ws << string("in") << ws
+    iterable = yield expr << ws << string(":\n")
     scope = yield peek(ws_scope.concat().map(len))
     next_indent = scope
     contents = []
@@ -121,7 +120,7 @@ def for_stmt():
             contents.append(body)
         else:
             break
-    return For(iter_name, iterable, body)
+    return For(iter_name, iterable, contents)
 
 
 @generate
@@ -196,7 +195,7 @@ yield_ = seq(string("return") >> ws >> expr << string("\n").optional()) \
         .combine(Yield)
 print_call = (string("print(") >> expr.sep_by(string(",")) << string(")")) \
     .desc("print call").map(PrintCall)
-range_call = (string("print(") >> expr.sep_by(string(",")) << string(")")) \
+range_call = (string("range(") >> expr << string(")")) \
     .desc("range call").map(RangeCall)
 
 
@@ -222,6 +221,7 @@ set_ = ((ws >> string("{") << ws) >> \
 
 expr.become(entrypoint |
             print_call |
+            range_call |
             function_call |
             function_decl |
             class_decl |
