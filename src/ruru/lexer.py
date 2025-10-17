@@ -1,7 +1,8 @@
 from .transpile import Param, ControlFlow, FunctionCall, Atom, BinOp, \
                         FunctionDecl, Assignment, Return, PrintCall, \
                         Entrypoint, EmptyLine, Class, Variable, List, Dict, \
-                        Yield, With, For, IntegerLiteral, StringLiteral, Name
+                        Yield, With, For, IntegerLiteral, StringLiteral, \
+                        Name, RangeCall
 from parsy import forward_declaration, generate, whitespace, regex, string, \
                   seq, peek
 
@@ -66,7 +67,7 @@ function_call = seq(
 integer = regex("[0-9]+").map(lambda res: Atom(res, "int")) \
                          .desc("int") \
                          .combine(IntegerLiteral)
-decimal = regex("[0-9]*+\.[0-9]+").map(lambda res: Atom(res, "float")) \
+decimal = regex(r"[0-9]*+\.[0-9]+").map(lambda res: Atom(res, "float")) \
                                  .desc("float")
 string_ = (string('"') >> regex(r'[^"\\]+') << string('"')).map(StringLiteral)
 
@@ -195,6 +196,9 @@ yield_ = seq(string("return") >> ws >> expr << string("\n").optional()) \
         .combine(Yield)
 print_call = (string("print(") >> expr.sep_by(string(",")) << string(")")) \
     .desc("print call").map(PrintCall)
+range_call = (string("print(") >> expr.sep_by(string(",")) << string(")")) \
+    .desc("range call").map(RangeCall)
+
 
 # Handle this if statement as a special entrypoint for the program.
 entrypoint = seq(

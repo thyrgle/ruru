@@ -154,6 +154,18 @@ class PrintCall:
         return result
 
 
+
+@dataclass
+class RangeCall:
+    start: IntegerLiteral | None
+    stop: IntegerLiteral # Must always have a stop.
+    step: IntegerLiteral | None
+
+
+    def __str__(self):
+        return "" # TODO
+
+
 @dataclass
 class Param:
     name: Name
