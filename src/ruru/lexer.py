@@ -2,7 +2,7 @@ from .transpile import Param, ControlFlow, FunctionCall, Atom, BinOp, \
                         FunctionDecl, Assignment, Return, PrintCall, \
                         Entrypoint, EmptyLine, Class, Variable, List, Dict, \
                         Yield, With, For, IntegerLiteral, StringLiteral, \
-                        Name, RangeCall
+                        Name, RangeCall, Comment, TupleUnpack
 from parsy import forward_declaration, generate, whitespace, regex, string, \
                   seq, peek
 
@@ -165,6 +165,14 @@ while_stmt = ctrl_stmt("while")
 control_flow = (if_stmt | elif_stmt | else_stmt |
                 while_stmt | for_stmt).desc("control flow")
 
+comment = (string("#") >> regex(r".*") << string("\n")).map(Comment)
+
+# Tuple unpack.
+tuple_unpack = seq(
+    (ws >> name << ws).sep_by(string(", ")) << string("="),
+    (ws >> expr << ws).sep_by(string(","))
+).combine(TupleUnpack)
+
 # Special binary op that requires a name on lhs.
 assignment = seq(
     var,
@@ -180,7 +188,8 @@ greater_than = make_bin_op(">")
 geq = make_bin_op(">=")
 less_than = make_bin_op("<")
 leq = make_bin_op("<=")
-binary_op = (addition | \
+binary_op = (tuple_unpack | \
+             addition | \
              subtraction | \
              multiply | \
              assignment | \
@@ -222,6 +231,7 @@ set_ = ((ws >> string("{") << ws) >> \
         (ws >> string("}"))).combine(Dict)
 
 expr.become(entrypoint |
+            comment |
             binary_op |
             print_call |
             range_call |

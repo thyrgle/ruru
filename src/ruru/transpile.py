@@ -170,6 +170,14 @@ class RangeCall:
 
 
 @dataclass
+class Comment:
+    note: str
+
+    def __str__(self):
+        return f"// {self.note}"
+
+
+@dataclass
 class Param:
     name: Name
     type_: str | None
@@ -330,6 +338,21 @@ class EmptyLine(Expr):
     """Essentially a no-op when a blank line is encountered."""
     @Program.scoped
     def __str__(self):
+        return ""
+
+
+@dataclass
+class TupleUnpack:
+    vars_: list[Variable]
+    rhs: list[Expr]
+
+    @Program.scoped
+    def __str__(self):
+        if len(self.vars_) != len(self.rhs):
+            raise ValueError("Can't unpack")
+        result = ""
+        for var, expr in zip(self.vars_, self.rhs):
+            result += "" # TODO
         return ""
 
 
