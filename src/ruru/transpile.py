@@ -343,7 +343,7 @@ class EmptyLine(Expr):
 
 @dataclass
 class TupleUnpack:
-    vars_: list[Variable]
+    vars_: list[Name]
     rhs: list[Expr]
 
     @Program.scoped
@@ -351,9 +351,9 @@ class TupleUnpack:
         if len(self.vars_) != len(self.rhs):
             raise ValueError("Can't unpack")
         result = ""
-        for var, expr in zip(self.vars_, self.rhs):
-            result += "" # TODO
-        return ""
+        for var, rhs in zip(self.vars_, self.rhs):
+            result += str(var) + " = " + str(rhs) + ";\n"
+        return result
 
 
 @dataclass
@@ -367,12 +367,13 @@ class Assignment:
         cur_scope = Program.scope
         Program.scope = 0
         result = ""
-        if self.var.name in Program.initialized[cur_scope]:
+        if self.var.name.name in Program.initialized[cur_scope]:
             result += str(self.var) + " = " + str(self.rhs) + ";"
         else:
-            result += "let mut " + str(self.var.name) + ": Rc<Unknown> = " + \
+            Program.use_rc = True
+            result += "let mut " + str(self.var.name) + ": Rc<" + _type_map[str(self.var.type_)] + "> = " + \
                       "Rc::new(" + str(self.rhs) + ");"
-            Program.initialized[cur_scope].add(self.var.name)
+            Program.initialized[cur_scope].add(self.var.name.name)
         # Resume as usual.
         Program.scope = cur_scope
         return result
@@ -408,7 +409,7 @@ class Atom(Expr):
 def compute_preamble(result):
     preamble = ""
     if Program.use_unknown:
-        preamble += "use ruru::Unknown;\n"
+        preamble += "use rust_dynamic::value::Value;\n"
     if Program.use_rc:
         preamble += "use std::rc::Rc;\n"
     if preamble != "": # There were imports!

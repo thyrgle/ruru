@@ -169,7 +169,7 @@ comment = (string("#") >> regex(r".*") << string("\n")).map(Comment)
 
 # Tuple unpack.
 tuple_unpack = seq(
-    (ws >> name << ws).sep_by(string(", ")) << string("="),
+    (ws >> name << ws).sep_by(string(",")) << string("="),
     (ws >> expr << ws).sep_by(string(","))
 ).combine(TupleUnpack)
 
@@ -204,7 +204,7 @@ return_ = seq(string("return") >> ws >> expr << string("\n").optional()) \
          .combine(Return)
 yield_ = seq(string("return") >> ws >> expr << string("\n").optional()) \
         .combine(Yield)
-print_call = (string("print(") >> expr.sep_by(string(",")) << string(")")) \
+print_call = (string("print(") >> expr.sep_by(string(",")) << string(")") << string("\n")) \
     .desc("print call").map(PrintCall)
 range_call = (string("range(") >> expr << string(")")) \
     .desc("range call").map(RangeCall)
